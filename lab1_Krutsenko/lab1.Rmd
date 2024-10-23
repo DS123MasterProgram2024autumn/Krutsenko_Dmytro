@@ -1,0 +1,47 @@
+---
+title: "Lab_1_Krutsenko"
+date: "2024-10-23"
+output:
+#   pdf_document:
+#     highlight: tango
+#     toc: yes
+#   word_document:
+#     highlight: tango
+#     toc: yes
+  html_notebook:
+    toc: yes # генерація змісту документу
+    toc_float: true
+    highlight: tango # Колір підсвічування коду
+fontsize: 12pt # розмір шрифту
+header-includes:
+ \usepackage[T2A]{fontenc}
+ \usepackage[utf8]{inputenc}
+editor_options: 
+  chunk_output_type: console # вивід результатів обчислень на консоль
+---
+
+```{r}
+# Задаємо область визначення
+x <- seq(-1, 1, 0.01)  # Від -1 до 1 з кроком 0.01
+
+# Квадратна функція
+y1 <- x^2
+
+# Синусоїдальна функція
+y2 <- sin(2 * pi * x)
+
+# Побудова графіків
+plot(x, y1,
+     type = "l",        # Лінійний графік
+     col = "red",       # Червона лінія для квадратної функції
+     ylim = c(-1, 1),   # Встановлюємо межі по осі Y
+     main = "Графік функцій: Квадратна та Синусоїдальна",
+     xlab = "x",
+     ylab = "y"
+)
+
+# Додаємо синусоїдальну функцію
+lines(x, y2, col = "blue")  # Лінія для синусоїдальної функції
+
+# Додаємо легенду
+legend("topright", legend = c("y = x^2", "y = sin(2πx)"), col = c("red", "blue"), lty = 1)
