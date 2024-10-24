@@ -1,0 +1,34 @@
+---
+title: "lab4_Krutsenko"
+author: "Krutsenko.D"
+date: "2024-10-24"
+output: flexdashboard::flex_dashboard
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)  # Додаємо бібліотеку ggplot2
+```
+
+`## Column 1`
+
+`## Карати`
+```{r}
+ggplot(diamonds, aes(carat)) + geom_histogram(binwidth = 0.1)
+```
+`## Column 2`
+`## Огранювання`
+```{r}
+ggplot(diamonds, aes(cut)) + 
+  geom_bar() +
+  labs(title = "Розподіл за огранюванням", x = "Огранювання", y = "Кількість")
+```
+`## Column 3`
+`## Найбільші діаманти та їх вартість`
+```{r}
+top_diamonds <- diamonds[order(-diamonds$carat), ][1:10, ]
+ggplot(top_diamonds, aes(x = reorder(rownames(top_diamonds), carat), y = price)) + 
+  geom_col(fill = "steelblue") + 
+  coord_flip() +
+  labs(title = "Найбільші діаманти та їх вартість", x = "Діаманти", y = "Вартість")
+```
