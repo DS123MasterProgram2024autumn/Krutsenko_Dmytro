@@ -1,0 +1,146 @@
+---
+title: "Lab_1_Krutsenko"
+date: "2024-10-23"
+output:
+#   pdf_document:
+#     highlight: tango
+#     toc: yes
+#   word_document:
+#     highlight: tango
+#     toc: yes
+  html_notebook:
+    toc: yes # генерація змісту документу
+    toc_float: true
+    highlight: tango # Колір підсвічування коду
+fontsize: 12pt # розмір шрифту
+header-includes:
+ \usepackage[T2A]{fontenc}
+ \usepackage[utf8]{inputenc}
+editor_options: 
+  chunk_output_type: console # вивід результатів обчислень на консоль
+---
+```{r setup, include=FALSE}
+# Встановлюємо налаштування для RMarkdown
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+# Завантаження необхідних бібліотек
+library(dplyr)
+library(ggplot2)
+library(knitr)  # Додаємо бібліотеку для kable
+```
+```{r}
+# Джерело https://patrolpolice.gov.ua/statистика/
+# Створюємо фіктивні дані для ДТП з 2017 по 2024 рік
+data_list <- list(
+  `2017` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(42639, 11576, 14609, 12029, 2728, 4083, 1612)
+  ),
+  `2018` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(41402, 11576, 14609, 12029, 2728, 4083, 1612)
+  ),
+  `2019` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(38073, 10779, 13594, 11491, 2240, 3584, 1705)
+  ),
+  `2020` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(40750, 11292, 14107, 11902, 2506, 3764, 1967)
+  ),
+  `2021` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(37432, 10894, 13874, 11445, 2445, 3243, 1784)
+  ),
+  `2022` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(34264, 10534, 12954, 11253, 2943, 2900, 1640)
+  ),
+  `2023` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(32432, 10197, 12874, 11145, 2045, 3513, 1525)
+  ),
+  `2024` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(33125, 11080, 13153, 10821, 3341, 3748, 2104)
+  )
+)
+
+# Переглядаємо таблиці
+for (year in names(data_list)) {
+  cat("### Таблиця: Кількість ДТП по регіонах України за", year, "рік\n")
+  print(kable(data_list[[year]], caption = paste("Кількість ДТП по регіонах України за", year, "рік")))
+  cat("\n\n")
+}
+
+# Об'єднуємо дані для графіка
+combined_data <- bind_rows(
+  lapply(names(data_list), function(year) {
+    data_list[[year]] %>%
+      mutate(Year = year)
+  })
+)
+
+# Перетворюємо рік в фактор для правильного відображення на осі X
+combined_data$Year <- factor(combined_data$Year, levels = names(data_list))
+
+# Графік динаміки ДТП по регіонах
+p <- ggplot(combined_data, aes(x = Year, y = Accidents, group = Region, color = Region)) +
+  geom_line() +
+  geom_point(size = 3) +
+  theme_minimal() +
+  labs(
+    title = "Динаміка ДТП по регіонах України (2017-2024)",
+    x = "Рік",
+    y = "Кількість ДТП"
+  )
+
+print(p)  # Виводимо графік
+## Гіпотеза 1: Стабільність рівня ДТП в Україні
+#чи можна вважати рівень ДТП в цілому по Україні стабільним протягом досліджуваного періоду; якщо ні, то яка тенденція має місце?
+
+# Підрахунок загальної кількості ДТП за роками
+total_accidents_per_year <- sapply(data_list, function(df) sum(df$Accidents))
+
+# Тест на стабільність (ANOVA)
+anova_result <- aov(total_accidents_per_year ~ factor(names(data_list)))
+summary(anova_result)
+
+# Графік загальної кількості ДТП по роках
+ggplot(data.frame(Year = names(data_list), Accidents = total_accidents_per_year), 
+       aes(x = Year, y = Accidents)) +
+  geom_line(color = "blue", size = 1) +  # Додаємо лінію
+  geom_point(size = 3, color = "red") +  # Збільшуємо розмір точок
+  theme_minimal() +  # Мінімалістичний стиль
+  labs(title = "Загальна кількість ДТП в Україні (2017-2024)", 
+       x = "Рік", 
+       y = "Кількість ДТП") +
+  scale_y_continuous(labels = scales::comma)  # Форматування осі Y з комами
+# Висновок Гіпотези 1 : З цими даними можна зробити наступні спостереження: змінення З 2017 по 2022 рік можна поступово зменшується кількість ДТП.У 2023 році відзначається невелике зростання, але все ще нижче, ніж у 2017 році.Стабільність : Загальна кількість ДТП за роками змінюється, але за останні кілька років відзначається загальна тенденція до зменшення.
+
+
+#Гіпотеза 2: Одинаковість рівня ДТП по областях
+
+# Об'єднуємо дані для ANOVA
+combined_data <- bind_rows(
+  lapply(names(data_list), function(year) {
+    data_list[[year]] %>%
+      mutate(Year = year)
+  })
+)
+
+# Тест на відмінності (ANOVA) по областях
+anova_regions <- aov(Accidents ~ Region, data = combined_data)
+summary(anova_regions)
+
+# Графік середньої кількості ДТП по областях
+average_accidents_per_region <- combined_data %>%
+  group_by(Region) %>%
+  summarise(Average_Accidents = mean(Accidents))
+
+ggplot(average_accidents_per_region, aes(x = reorder(Region, Average_Accidents), y = Average_Accidents)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  coord_flip() +
+  labs(title = "Середня кількість ДТП по регіонах України (2017-2024)", x = "Регіон", y = "Середня кількість ДТП")
+#Результат гіпотези : як ми бачимо по графіку  в київській області найбільші показники дтп, а в кропивницькій області-найменші 
+```
