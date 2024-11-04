@@ -1,0 +1,139 @@
+---
+title: "Lab_3_Krutsenko"
+date: "2024-10-23"
+output:
+#   pdf_document:
+#     highlight: tango
+#     toc: yes
+#   word_document:
+#     highlight: tango
+#     toc: yes
+  html_notebook:
+    toc: yes # генерація змісту документу
+    toc_float: true
+    highlight: tango # Колір підсвічування коду
+fontsize: 12pt # розмір шрифту
+header-includes:
+ \usepackage[T2A]{fontenc}
+ \usepackage[utf8]{inputenc}
+editor_options: 
+  chunk_output_type: console # вивід результатів обчислень на консоль
+---
+```{r setup, include=FALSE}
+# Встановлюємо налаштування для RMarkdown
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+# Завантаження необхідних бібліотек
+library(dplyr)
+library(ggplot2)
+library(knitr)  # Додаємо бібліотеку для kable
+library(kableExtra)
+```
+```{r}
+# Джерело https://patrolpolice.gov.ua/statистика/
+# Створення фіктивних даних для ДТП з 2017 по 2024 рік
+data_list <- list(
+  `2017` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(42639, 11576, 14609, 12029, 2728, 4083, 1612)
+  ),
+  `2018` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(41402, 11576, 14609, 12029, 2728, 4083, 1612)
+  ),
+  `2019` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(38073, 10779, 13594, 11491, 2240, 3584, 1705)
+  ),
+  `2020` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(40750, 11292, 14107, 11902, 2506, 3764, 1967)
+  ),
+  `2021` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(37432, 10894, 13874, 11445, 2445, 3243, 1784)
+  ),
+  `2022` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(34264, 10534, 12954, 11253, 2943, 2900, 1640)
+  ),
+  `2023` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(32432, 10197, 12874, 11145, 2045, 3513, 1525)
+  ),
+  `2024` = data.frame(
+    Region = c("Київська", "Львівська", "Одеська", "Харківська", "Чернігівська", "Полтавська", "Кропивницька"),
+    Accidents = c(33125, 11080, 13153, 10821, 3341, 3748, 2104)
+  )
+)
+
+# Об'єднання даних для подальшого аналізу
+combined_data <- bind_rows(
+  lapply(names(data_list), function(year) {
+    data_list[[year]] %>%
+      mutate(Year = as.numeric(year))
+  })
+)
+
+# 1. Перевірка комплектності даних
+if (anyNA(combined_data)) {
+  cat("Дані містять пропущені значення.\n")
+} else {
+  cat("Дані комплектні, без пропущених значень.\n")
+}
+
+# 2. Характер розподілу змінних
+# Гістограма кількості ДТП по регіонах
+ggplot(combined_data, aes(x = Accidents)) +
+  geom_histogram(binwidth = 500, fill = "skyblue", color = "black") +
+  facet_wrap(~ Region) +
+  labs(title = "Гістограми розподілу ДТП по регіонах", x = "Кількість ДТП", y = "Частота")
+
+# Тест на нормальність (критерій Шапіро-Уілка) для кожного регіону
+shapiro_results <- combined_data %>%
+  group_by(Region) %>%
+  summarise(p_value = shapiro.test(Accidents)$p.value)
+
+print("Результати тесту на нормальність (p-значення):")
+print(shapiro_results)
+
+# 3. Аналіз зв'язку між характеристиками
+# Кореляційний аналіз між роком і кількістю ДТП
+cor_test <- cor.test(combined_data$Year, combined_data$Accidents)
+print(cor_test)
+
+# Графік розсіювання для перевірки зв'язку між роком і кількістю ДТП
+ggplot(combined_data, aes(x = Year, y = Accidents, color = Region)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Розсіювання ДТП по роках і регіонах", x = "Рік", y = "Кількість ДТП")
+
+# 4. Аналіз головних компонент (PCA) для зменшення розмірності
+# Підготовка даних для PCA (залишаємо числові змінні)
+pca_data <- combined_data %>%
+  select(Accidents, Year)
+
+# Виконання PCA
+pca_result <- prcomp(pca_data, scale. = TRUE)
+
+# Виведення відсотку варіації, що пояснюється кожним компонентом
+summary(pca_result)
+
+# Візуалізація перших двох головних компонентів
+pca_data_plot <- data.frame(pca_result$x)
+pca_data_plot$Region <- combined_data$Region
+
+ggplot(pca_data_plot, aes(x = PC1, y = PC2, color = Region)) +
+  geom_point(size = 3) +
+  labs(title = "PCA: Перше і друге головні компоненти", x = "Головна компонента 1", y = "Головна компонента 2") +
+  theme_minimal()
+
+# Діаграма поясненої дисперсії (Scree plot)
+scree_plot <- data.frame(Component = 1:length(pca_result$sdev), 
+                         Variance = (pca_result$sdev)^2 / sum((pca_result$sdev)^2) * 100)
+
+ggplot(scree_plot, aes(x = Component, y = Variance)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Діаграма поясненої дисперсії (Scree plot)", x = "Компонента", y = "Пояснена варіація (%)") +
+  theme_minimal()
+```
